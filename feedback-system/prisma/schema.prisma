@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["boby"]
 }
 
 model User {
@@ -22,6 +23,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@index([email])
+  @@schema("boby")
 }
 
 model Branch {
@@ -39,6 +41,7 @@ model Branch {
   updatedAt DateTime   @updatedAt
 
   @@index([type])
+  @@schema("boby")
 }
 
 model Feedback {
@@ -58,6 +61,7 @@ model Feedback {
   @@index([branchId])
   @@index([createdAt])
   @@index([rating])
+  @@schema("boby")
 }
 
 model FeedbackFile {
@@ -71,9 +75,11 @@ model FeedbackFile {
   createdAt  DateTime @default(now())
 
   @@index([feedbackId])
+  @@schema("boby")
 }
 
 enum Role {
   ADMIN
   USER
+  @@schema("boby")
 }

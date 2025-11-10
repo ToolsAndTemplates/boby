@@ -23,7 +23,7 @@ async function main() {
   console.log({ admin })
 
   // Read bank locations from JSON file
-  const locationsPath = path.join(process.cwd(), '..', 'locations', 'bank_locations.json')
+  const locationsPath = path.join(process.cwd(), 'locations', 'bank_locations.json')
 
   if (fs.existsSync(locationsPath)) {
     const locationsData = JSON.parse(fs.readFileSync(locationsPath, 'utf-8'))
@@ -32,20 +32,27 @@ async function main() {
 
     for (const location of locationsData) {
       if (location.latitude && location.longitude) {
-        await prisma.branch.upsert({
+        // Check if branch already exists
+        const existingBranch = await prisma.branch.findFirst({
           where: {
             name: location.name,
-          },
-          update: {},
-          create: {
-            name: location.name,
-            address: location.address,
-            type: location.type,
-            services: location.services || 'All banking services',
             latitude: location.latitude,
             longitude: location.longitude,
           },
         })
+
+        if (!existingBranch) {
+          await prisma.branch.create({
+            data: {
+              name: location.name,
+              address: location.address,
+              type: location.type,
+              services: location.services || 'All banking services',
+              latitude: location.latitude,
+              longitude: location.longitude,
+            },
+          })
+        }
       }
     }
     console.log('Locations imported successfully')

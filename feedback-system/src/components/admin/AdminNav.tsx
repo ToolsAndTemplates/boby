@@ -18,6 +18,7 @@ export default function AdminNav({ user }: AdminNavProps) {
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/branches', label: 'Branches' },
+    { href: '/admin/map', label: 'Map' },
     { href: '/admin/analytics', label: 'Analytics' },
     ...(user.role === 'ADMIN' ? [{ href: '/admin/users', label: 'Users' }] : []),
   ]
