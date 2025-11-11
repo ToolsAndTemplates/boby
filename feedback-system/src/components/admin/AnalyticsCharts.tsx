@@ -57,8 +57,9 @@ export default function AnalyticsCharts({ data }: { data: AnalyticsData }) {
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ category, percent }) =>
-                `${category}: ${(percent * 100).toFixed(0)}%`
+              nameKey="category"
+              label={({ name, percent }) =>
+                `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
               }
               outerRadius={100}
               fill="#8884d8"
