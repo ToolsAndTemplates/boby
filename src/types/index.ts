@@ -3,9 +3,12 @@ import { z } from 'zod'
 // Feedback form validation schema
 export const feedbackSchema = z.object({
   branchId: z.string().min(1, 'Please select a branch'),
-  rating: z.string().transform((val) => parseInt(val, 10)).pipe(
-    z.number().min(1, 'Please select at least 1 star').max(5, 'Rating cannot exceed 5 stars')
-  ),
+  rating: z.string().refine((val) => {
+    const num = parseInt(val, 10)
+    return !isNaN(num) && num >= 1 && num <= 5
+  }, {
+    message: 'Please select at least 1 star',
+  }),
   category: z.string().min(1, 'Please select a category'),
   comment: z.string().optional(),
   customerName: z.string().optional(),
@@ -13,11 +16,7 @@ export const feedbackSchema = z.object({
   customerPhone: z.string().optional(),
 })
 
-// Input type for the form (what React Hook Form receives)
-export type FeedbackFormData = z.input<typeof feedbackSchema>
-
-// Output type after validation (what the schema produces)
-export type FeedbackData = z.output<typeof feedbackSchema>
+export type FeedbackFormData = z.infer<typeof feedbackSchema>
 
 // Login form validation schema
 export const loginSchema = z.object({
