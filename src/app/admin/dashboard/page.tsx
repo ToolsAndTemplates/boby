@@ -6,7 +6,14 @@ export default async function DashboardPage() {
   const session = await auth()
 
   // Get statistics
-  const [totalBranches, totalFeedback, recentFeedback] = await Promise.all([
+  const [actualBranches, totalLocations, totalFeedback, recentFeedback] = await Promise.all([
+    db.branch.count({
+      where: {
+        type: {
+          contains: 'Branch',
+        },
+      },
+    }),
     db.branch.count(),
     db.feedback.count(),
     db.feedback.findMany({
@@ -24,25 +31,54 @@ export default async function DashboardPage() {
     },
   })
 
+  // Get breakdown by type
+  const locationTypes = await db.branch.groupBy({
+    by: ['type'],
+    _count: {
+      type: true,
+    },
+  })
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Dashboard</h1>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-gray-500 text-sm font-medium">Total Branches</h3>
-          <p className="text-3xl font-bold mt-2">{totalBranches}</p>
+          <p className="text-3xl font-bold mt-2">{actualBranches}</p>
+          <p className="text-xs text-gray-400 mt-1">Branches only</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-gray-500 text-sm font-medium">Total Locations</h3>
+          <p className="text-3xl font-bold mt-2">{totalLocations}</p>
+          <p className="text-xs text-gray-400 mt-1">All types</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-gray-500 text-sm font-medium">Total Feedback</h3>
           <p className="text-3xl font-bold mt-2">{totalFeedback}</p>
+          <p className="text-xs text-gray-400 mt-1">Responses</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-gray-500 text-sm font-medium">Average Rating</h3>
           <p className="text-3xl font-bold mt-2">
             {averageRating._avg.rating?.toFixed(1) || 'N/A'}
           </p>
+          <p className="text-xs text-gray-400 mt-1">Out of 5 stars</p>
+        </div>
+      </div>
+
+      {/* Location Types Breakdown */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4">Location Types</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {locationTypes.map((type) => (
+            <div key={type.type} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <span className="font-medium text-gray-700">{type.type}</span>
+              <span className="text-2xl font-bold text-blue-600">{type._count.type}</span>
+            </div>
+          ))}
         </div>
       </div>
 
