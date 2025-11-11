@@ -139,13 +139,13 @@ export async function POST() {
           (location.title || '').replace(/<[^>]*>/g, '').trim()
         )
 
-        // Determine type based on title
-        let type = 'Branch'
+        // Determine type based on title (standardized plural forms)
+        let type = 'Branches'
         const titleLower = cleanTitle.toLowerCase()
         if (titleLower.includes('atm')) {
-          type = 'ATM'
+          type = 'ATMs'
         } else if (titleLower.includes('terminal')) {
-          type = 'Payment Terminal'
+          type = 'Payment Terminals'
         }
 
         // Upsert branch using external ID as unique identifier
@@ -276,12 +276,13 @@ export async function GET() {
           (location.title || '').replace(/<[^>]*>/g, '').trim()
         ) || 'Unnamed Location'
 
-        let type = 'Branch'
+        // Determine type based on title (standardized plural forms)
+        let type = 'Branches'
         const titleLower = cleanTitle.toLowerCase()
         if (titleLower.includes('atm')) {
-          type = 'ATM'
+          type = 'ATMs'
         } else if (titleLower.includes('terminal')) {
-          type = 'Payment Terminal'
+          type = 'Payment Terminals'
         }
 
         return {
