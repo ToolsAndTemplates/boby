@@ -16,7 +16,6 @@ function FeedbackContent() {
   const [branches, setBranches] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedBranch, setSelectedBranch] = useState<string>(branchId || '')
-  const [showMap, setShowMap] = useState(true)
 
   useEffect(() => {
     fetch('/api/branches')
@@ -26,7 +25,6 @@ function FeedbackContent() {
         setLoading(false)
         if (branchId && data.some((b: any) => b.id === branchId)) {
           setSelectedBranch(branchId)
-          setShowMap(false)
         }
       })
       .catch((err) => {
@@ -37,7 +35,6 @@ function FeedbackContent() {
 
   const handleBranchSelect = (branchId: string) => {
     setSelectedBranch(branchId)
-    setShowMap(false)
   }
 
   return (
@@ -62,33 +59,26 @@ function FeedbackContent() {
             {/* Map/Branch Selector Section */}
             <div className="order-2 lg:order-1">
               <div className="bg-white rounded-lg shadow-xl p-6 sticky top-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Select Your Branch
-                </h2>
-                {showMap ? (
-                  <BranchSelector
-                    branches={branches}
-                    onBranchSelect={handleBranchSelect}
-                    selectedBranchId={selectedBranch}
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-green-800 font-medium">
-                        Branch Selected: {branches.find(b => b.id === selectedBranch)?.name}
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Select Your Branch
+                  </h2>
+                  {selectedBranch && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm font-medium text-green-800">
+                        ✓ Selected: {branches.find(b => b.id === selectedBranch)?.name}
                       </p>
-                      <p className="text-sm text-green-600 mt-1">
+                      <p className="text-xs text-green-600 mt-1">
                         {branches.find(b => b.id === selectedBranch)?.address}
                       </p>
                     </div>
-                    <button
-                      onClick={() => setShowMap(true)}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Change Branch
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
+                <BranchSelector
+                  branches={branches}
+                  onBranchSelect={handleBranchSelect}
+                  selectedBranchId={selectedBranch}
+                />
               </div>
             </div>
 
