@@ -42,6 +42,9 @@ export default function BranchSelector({ branches, onBranchSelect, selectedBranc
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedView, setSelectedView] = useState<'map' | 'list'>('map')
 
+  // Filter to show ONLY "Branches" type (not ATMs or Payment terminals)
+  const branchesOnly = branches.filter(b => b.type === 'Branches')
+
   // Default center (Baku, Azerbaijan)
   const defaultCenter = { lat: 40.4093, lng: 49.8671 }
 
@@ -56,9 +59,9 @@ export default function BranchSelector({ branches, onBranchSelect, selectedBranc
           }
           setUserLocation(userLoc)
 
-          // Find nearest branch
-          if (branches.length > 0) {
-            const nearest = branches.reduce((prev, curr) => {
+          // Find nearest branch (only from actual branches, not ATMs)
+          if (branchesOnly.length > 0) {
+            const nearest = branchesOnly.reduce((prev, curr) => {
               const prevDist = getDistance(userLoc, { lat: prev.latitude, lng: prev.longitude })
               const currDist = getDistance(userLoc, { lat: curr.latitude, lng: curr.longitude })
               return currDist < prevDist ? curr : prev
@@ -71,7 +74,7 @@ export default function BranchSelector({ branches, onBranchSelect, selectedBranc
         }
       )
     }
-  }, [branches])
+  }, [branchesOnly])
 
   const getDistance = (loc1: { lat: number; lng: number }, loc2: { lat: number; lng: number }) => {
     const R = 6371 // Earth's radius in km
@@ -87,7 +90,7 @@ export default function BranchSelector({ branches, onBranchSelect, selectedBranc
     return R * c
   }
 
-  const filteredBranches = branches.filter(
+  const filteredBranches = branchesOnly.filter(
     (branch) =>
       branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       branch.address.toLowerCase().includes(searchTerm.toLowerCase())
