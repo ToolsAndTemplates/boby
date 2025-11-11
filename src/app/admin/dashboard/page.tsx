@@ -96,7 +96,7 @@ export default async function DashboardPage() {
                 <div key={feedback.id} className="border-b pb-4 last:border-b-0">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-medium">{feedback.branch.name}</h3>
+                      <h3 className="font-medium">{feedback.branch?.name || 'General Feedback'}</h3>
                       <p className="text-sm text-gray-500">{feedback.category}</p>
                       {feedback.comment && (
                         <p className="text-gray-700 mt-2">{feedback.comment}</p>
