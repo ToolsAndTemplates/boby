@@ -19,7 +19,6 @@ interface User {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
-  const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -28,14 +27,12 @@ export default function UsersPage() {
     password: '',
     name: '',
     role: 'USER' as 'ADMIN' | 'USER',
-    branchId: '',
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
   useEffect(() => {
     fetchUsers()
-    fetchBranches()
   }, [])
 
   const fetchUsers = async () => {
@@ -52,18 +49,6 @@ export default function UsersPage() {
     }
   }
 
-  const fetchBranches = async () => {
-    try {
-      const res = await fetch('/api/branches')
-      const data = await res.json()
-      if (data.branches) {
-        setBranches(data.branches)
-      }
-    } catch (error) {
-      console.error('Error fetching branches:', error)
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -76,10 +61,7 @@ export default function UsersPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          branchId: formData.branchId || null,
-        }),
+        body: JSON.stringify(formData),
       })
 
       const data = await res.json()
@@ -91,7 +73,7 @@ export default function UsersPage() {
 
       setSuccess(editingUser ? 'User updated successfully' : 'User created successfully')
       setShowModal(false)
-      setFormData({ email: '', password: '', name: '', role: 'USER', branchId: '' })
+      setFormData({ email: '', password: '', name: '', role: 'USER' })
       setEditingUser(null)
       fetchUsers()
     } catch (error) {
@@ -106,7 +88,6 @@ export default function UsersPage() {
       password: '',
       name: user.name,
       role: user.role,
-      branchId: user.branchId || '',
     })
     setShowModal(true)
     setError('')
@@ -136,7 +117,7 @@ export default function UsersPage() {
 
   const openCreateModal = () => {
     setEditingUser(null)
-    setFormData({ email: '', password: '', name: '', role: 'USER', branchId: '' })
+    setFormData({ email: '', password: '', name: '', role: 'USER' })
     setShowModal(true)
     setError('')
   }
@@ -312,24 +293,6 @@ export default function UsersPage() {
                 >
                   <option value="USER">User</option>
                   <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Branch (Optional)
-                </label>
-                <select
-                  value={formData.branchId}
-                  onChange={(e) => setFormData({ ...formData, branchId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                >
-                  <option value="">No Branch</option>
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
                 </select>
               </div>
 
