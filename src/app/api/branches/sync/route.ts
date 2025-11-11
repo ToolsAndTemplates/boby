@@ -78,19 +78,22 @@ export async function POST() {
     }
 
     // Flatten nested structure and assign coordinates from listGroup to each list
-    const allLocations: Array<BankAPIList & { groupLocation: string }> = []
-    for (const page of data.payload.pages) {
+    // Page structure: Page 0 = ATMs, Page 1 = Branches (22), Page 2 = Service Points
+    const allLocations: Array<BankAPIList & { groupLocation: string; pageIndex: number }> = []
+    for (let pageIndex = 0; pageIndex < data.payload.pages.length; pageIndex++) {
+      const page = data.payload.pages[pageIndex]
       if (!page.informationGroup) continue
       for (const infoGroup of page.informationGroup) {
         if (!infoGroup.listGroup) continue
         for (const listGroup of infoGroup.listGroup) {
           if (!listGroup.lists || !listGroup.location) continue
 
-          // Each list in this group gets the group's location
+          // Each list in this group gets the group's location and page index
           for (const list of listGroup.lists) {
             allLocations.push({
               ...list,
               groupLocation: listGroup.location,
+              pageIndex,
             })
           }
         }
@@ -139,21 +142,15 @@ export async function POST() {
           (location.title || '').replace(/<[^>]*>/g, '').trim()
         )
 
-        // Determine type based on title (standardized plural forms)
-        const titleLower = cleanTitle.toLowerCase()
-        let type = 'Branches'
+        // Determine type based on page index (API structure)
+        // Page 0 = ATMs at branches, Page 1 = Full branches (22), Page 2 = Service Points
+        let type = 'Service Points' // default
 
-        if (titleLower.includes('atm')) {
+        if (location.pageIndex === 0) {
           type = 'ATMs'
-        } else if (titleLower.includes('terminal')) {
-          type = 'Payment Terminals'
-        } else if (
-          // Check if it's actually a branch/filial/office
-          !titleLower.includes('branch') &&
-          !titleLower.includes('filial') &&
-          !titleLower.includes('office')
-        ) {
-          // It's a service point (mall, travel agency, etc)
+        } else if (location.pageIndex === 1) {
+          type = 'Branches'
+        } else if (location.pageIndex === 2) {
           type = 'Service Points'
         }
 
@@ -239,19 +236,22 @@ export async function GET() {
     }
 
     // Flatten nested structure and assign coordinates from listGroup to each list
-    const allLocations: Array<BankAPIList & { groupLocation: string }> = []
-    for (const page of data.payload.pages) {
+    // Page structure: Page 0 = ATMs, Page 1 = Branches (22), Page 2 = Service Points
+    const allLocations: Array<BankAPIList & { groupLocation: string; pageIndex: number }> = []
+    for (let pageIndex = 0; pageIndex < data.payload.pages.length; pageIndex++) {
+      const page = data.payload.pages[pageIndex]
       if (!page.informationGroup) continue
       for (const infoGroup of page.informationGroup) {
         if (!infoGroup.listGroup) continue
         for (const listGroup of infoGroup.listGroup) {
           if (!listGroup.lists || !listGroup.location) continue
 
-          // Each list in this group gets the group's location
+          // Each list in this group gets the group's location and page index
           for (const list of listGroup.lists) {
             allLocations.push({
               ...list,
               groupLocation: listGroup.location,
+              pageIndex,
             })
           }
         }
@@ -285,21 +285,15 @@ export async function GET() {
           (location.title || '').replace(/<[^>]*>/g, '').trim()
         ) || 'Unnamed Location'
 
-        // Determine type based on title (standardized plural forms)
-        const titleLower = cleanTitle.toLowerCase()
-        let type = 'Branches'
+        // Determine type based on page index (API structure)
+        // Page 0 = ATMs at branches, Page 1 = Full branches (22), Page 2 = Service Points
+        let type = 'Service Points' // default
 
-        if (titleLower.includes('atm')) {
+        if (location.pageIndex === 0) {
           type = 'ATMs'
-        } else if (titleLower.includes('terminal')) {
-          type = 'Payment Terminals'
-        } else if (
-          // Check if it's actually a branch/filial/office
-          !titleLower.includes('branch') &&
-          !titleLower.includes('filial') &&
-          !titleLower.includes('office')
-        ) {
-          // It's a service point (mall, travel agency, etc)
+        } else if (location.pageIndex === 1) {
+          type = 'Branches'
+        } else if (location.pageIndex === 2) {
           type = 'Service Points'
         }
 
