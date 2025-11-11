@@ -57,14 +57,28 @@ export default function FeedbackForm({ branches, initialBranchId }: FeedbackForm
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
       const firstErrorField = Object.keys(errors)[0]
-      const errorElement = document.querySelector(`[name="${firstErrorField}"]`) ||
-                          document.querySelector(`[data-error="${firstErrorField}"]`)
 
-      if (errorElement) {
-        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      } else if (firstErrorField === 'branchId') {
-        // If branch is the error, scroll to top of page
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (firstErrorField === 'branchId') {
+        // Scroll to branch selector section
+        const branchSelector = document.getElementById('branch-selector')
+        if (branchSelector) {
+          branchSelector.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          // Add visual feedback - pulse animation
+          branchSelector.classList.add('animate-pulse')
+          setTimeout(() => {
+            branchSelector.classList.remove('animate-pulse')
+          }, 2000)
+        } else {
+          // Fallback to scrolling to top
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+      } else {
+        // For other errors, find the specific field
+        const errorElement = document.querySelector(`[name="${firstErrorField}"]`) ||
+                            document.querySelector(`[data-error="${firstErrorField}"]`)
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
       }
     }
   }, [errors])
@@ -148,7 +162,18 @@ export default function FeedbackForm({ branches, initialBranchId }: FeedbackForm
               </p>
               <button
                 type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                onClick={() => {
+                  const branchSelector = document.getElementById('branch-selector')
+                  if (branchSelector) {
+                    branchSelector.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    branchSelector.classList.add('animate-pulse')
+                    setTimeout(() => {
+                      branchSelector.classList.remove('animate-pulse')
+                    }, 2000)
+                  } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }
+                }}
                 className="mt-3 px-4 py-2 bg-white text-red-600 rounded-lg font-semibold text-sm hover:bg-red-50 transition-colors"
               >
                 ↑ Select Branch Now

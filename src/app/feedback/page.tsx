@@ -67,7 +67,7 @@ function FeedbackContent() {
           <div className="grid lg:grid-cols-5 gap-6 lg:gap-8">
             {/* Map/Branch Selector Section - Sticky on Desktop */}
             <div className="lg:col-span-2 order-1">
-              <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 lg:sticky lg:top-6">
+              <div id="branch-selector" className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 lg:sticky lg:top-6 transition-all">
                 <div className="mb-4">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2 mb-3">
                     <span className="text-2xl">📍</span>
