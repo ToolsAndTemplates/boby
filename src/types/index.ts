@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 // Feedback form validation schema
 export const feedbackSchema = z.object({
-  branchId: z.string().min(1, 'Please select a branch'),
+  branchId: z.string().optional().or(z.literal('')),
   rating: z.string().refine((val) => {
     const num = parseInt(val, 10)
     return !isNaN(num) && num >= 1 && num <= 5

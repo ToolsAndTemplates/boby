@@ -47,8 +47,8 @@ model Branch {
 
 model Feedback {
   id         String         @id @default(cuid())
-  branchId   String
-  branch     Branch         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branchId   String?
+  branch     Branch?        @relation(fields: [branchId], references: [id], onDelete: Cascade)
   rating     Int            // 1-5 stars
   category   String         // Service, Cleanliness, Speed, etc.
   comment    String?

@@ -13,7 +13,7 @@ interface FeedbackFile {
 
 interface Feedback {
   id: string
-  branchId: string
+  branchId: string | null
   rating: number
   category: string
   comment: string | null
@@ -26,7 +26,7 @@ interface Feedback {
     id: string
     name: string
     address: string
-  }
+  } | null
   files: FeedbackFile[]
 }
 
@@ -47,7 +47,7 @@ export default function FeedbackList({ feedbacks, isAdmin }: FeedbackListProps) 
   // Filter feedbacks
   const filteredFeedbacks = feedbacks.filter((feedback) => {
     const matchesSearch =
-      feedback.branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      feedback.branch?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.comment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -169,14 +169,16 @@ export default function FeedbackList({ feedbacks, isAdmin }: FeedbackListProps) 
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">
-                        {feedback.branch.name}
+                        {feedback.branch?.name || 'General Feedback'}
                       </h3>
                       <div className="flex items-center bg-yellow-50 px-3 py-1 rounded-full">
                         <span className="text-yellow-500 mr-1">★</span>
                         <span className="font-bold text-yellow-700">{feedback.rating}</span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-500">{feedback.branch.address}</p>
+                    {feedback.branch && (
+                      <p className="text-sm text-gray-500">{feedback.branch.address}</p>
+                    )}
                   </div>
 
                   {isAdmin && (

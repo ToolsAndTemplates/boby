@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
 
-    const branchId = formData.get('branchId') as string
+    const branchId = formData.get('branchId') as string || undefined
     const ratingStr = formData.get('rating') as string
     const category = formData.get('category') as string
     const comment = formData.get('comment') as string || undefined
@@ -16,10 +16,7 @@ export async function POST(request: NextRequest) {
     const customerPhone = formData.get('customerPhone') as string || undefined
     const customFields = formData.get('customFields') as string || undefined
 
-    // Validate required fields
-    if (!branchId) {
-      return NextResponse.json({ error: 'Branch ID is required' }, { status: 400 })
-    }
+    // Branch ID is now optional - skip validation
 
     if (!ratingStr) {
       return NextResponse.json({ error: 'Rating is required' }, { status: 400 })
