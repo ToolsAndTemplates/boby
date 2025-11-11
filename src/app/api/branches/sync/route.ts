@@ -15,7 +15,13 @@ interface BankAPIResponse {
   statusCode: number
   messages: string | null
   payload: {
-    contents: BankAPILocation[]
+    pages: Array<{
+      informationGroup: Array<{
+        listGroup: Array<{
+          lists: BankAPILocation[]
+        }>
+      }>
+    }>
     positionOrder: number
     pageType: string
     siteMode: string
@@ -43,12 +49,25 @@ export async function POST() {
 
     const data: BankAPIResponse = await response.json()
 
-    if (!data.payload || !data.payload.contents) {
+    if (!data.payload || !data.payload.pages) {
       throw new Error('Invalid API response structure')
     }
 
+    // Flatten nested structure to get all locations
+    const allLocations: BankAPILocation[] = []
+    for (const page of data.payload.pages) {
+      if (!page.informationGroup) continue
+      for (const infoGroup of page.informationGroup) {
+        if (!infoGroup.listGroup) continue
+        for (const listGroup of infoGroup.listGroup) {
+          if (!listGroup.lists) continue
+          allLocations.push(...listGroup.lists)
+        }
+      }
+    }
+
     // Filter for English language entries only to avoid duplicates
-    const englishLocations = data.payload.contents.filter(
+    const englishLocations = allLocations.filter(
       (loc) => loc.language === 'en'
     )
 
@@ -59,8 +78,22 @@ export async function POST() {
     // Sync each location with database
     for (const location of englishLocations) {
       try {
+        // Validate location data
+        if (!location.location || typeof location.location !== 'string') {
+          console.error(`Missing or invalid location for ${location.title || 'unknown'}`)
+          errors++
+          continue
+        }
+
         // Parse location string "latitude, longitude"
-        const [latStr, lngStr] = location.location.split(',').map((s) => s.trim())
+        const parts = location.location.split(',')
+        if (parts.length !== 2) {
+          console.error(`Invalid location format for ${location.title}: ${location.location}`)
+          errors++
+          continue
+        }
+
+        const [latStr, lngStr] = parts.map((s) => s.trim())
         const latitude = parseFloat(latStr)
         const longitude = parseFloat(lngStr)
 
@@ -70,9 +103,12 @@ export async function POST() {
           continue
         }
 
+        // Clean title by removing HTML tags
+        const cleanTitle = (location.title || '').replace(/<[^>]*>/g, '').trim()
+
         // Determine type based on title
         let type = 'Branch'
-        const titleLower = location.title.toLowerCase()
+        const titleLower = cleanTitle.toLowerCase()
         if (titleLower.includes('atm')) {
           type = 'ATM'
         } else if (titleLower.includes('terminal')) {
@@ -85,19 +121,19 @@ export async function POST() {
         const branch = await db.branch.upsert({
           where: { qrCode: externalId },
           create: {
-            name: location.title,
-            address: location.address,
+            name: cleanTitle,
+            address: location.address || 'No address',
             type,
-            services: location.serviceNames,
+            services: location.serviceNames || 'No services listed',
             latitude,
             longitude,
             qrCode: externalId,
           },
           update: {
-            name: location.title,
-            address: location.address,
+            name: cleanTitle,
+            address: location.address || 'No address',
             type,
-            services: location.serviceNames,
+            services: location.serviceNames || 'No services listed',
             latitude,
             longitude,
           },
@@ -156,20 +192,50 @@ export async function GET() {
 
     const data: BankAPIResponse = await response.json()
 
-    if (!data.payload || !data.payload.contents) {
+    if (!data.payload || !data.payload.pages) {
       throw new Error('Invalid API response structure')
     }
 
+    // Flatten nested structure to get all locations
+    const allLocations: BankAPILocation[] = []
+    for (const page of data.payload.pages) {
+      if (!page.informationGroup) continue
+      for (const infoGroup of page.informationGroup) {
+        if (!infoGroup.listGroup) continue
+        for (const listGroup of infoGroup.listGroup) {
+          if (!listGroup.lists) continue
+          allLocations.push(...listGroup.lists)
+        }
+      }
+    }
+
     // Filter for English language entries and transform
-    const branches = data.payload.contents
+    const branches = allLocations
       .filter((loc) => loc.language === 'en')
       .map((location) => {
-        const [latStr, lngStr] = location.location.split(',').map((s) => s.trim())
+        // Handle missing or invalid location data
+        if (!location.location || typeof location.location !== 'string') {
+          return null
+        }
+
+        const parts = location.location.split(',')
+        if (parts.length !== 2) {
+          return null
+        }
+
+        const [latStr, lngStr] = parts.map((s) => s.trim())
         const latitude = parseFloat(latStr)
         const longitude = parseFloat(lngStr)
 
+        if (isNaN(latitude) || isNaN(longitude)) {
+          return null
+        }
+
+        // Clean title by removing HTML tags
+        const cleanTitle = (location.title || '').replace(/<[^>]*>/g, '').trim() || 'Unnamed Location'
+
         let type = 'Branch'
-        const titleLower = location.title.toLowerCase()
+        const titleLower = cleanTitle.toLowerCase()
         if (titleLower.includes('atm')) {
           type = 'ATM'
         } else if (titleLower.includes('terminal')) {
@@ -178,15 +244,15 @@ export async function GET() {
 
         return {
           id: location.id,
-          name: location.title,
-          address: location.address,
+          name: cleanTitle,
+          address: location.address || 'No address',
           type,
-          services: location.serviceNames,
+          services: location.serviceNames || 'No services listed',
           latitude,
           longitude,
         }
       })
-      .filter((branch) => !isNaN(branch.latitude) && !isNaN(branch.longitude))
+      .filter((branch): branch is NonNullable<typeof branch> => branch !== null)
 
     return NextResponse.json({
       success: true,
