@@ -12,20 +12,25 @@ export default async function BranchesPage() {
     orderBy: { name: 'asc' },
   })
 
-  const branchesWithStats = await Promise.all(
-    branches.map(async (branch) => {
-      const avgRating = await db.feedback.aggregate({
-        where: { branchId: branch.id },
-        _avg: { rating: true },
-      })
+  // Get all ratings at once grouped by branch
+  const ratings = await db.feedback.groupBy({
+    by: ['branchId'],
+    _avg: {
+      rating: true,
+    },
+  })
 
-      return {
-        ...branch,
-        feedbackCount: branch._count.feedbacks,
-        averageRating: avgRating._avg.rating || 0,
-      }
-    })
+  // Create a map for quick lookup
+  const ratingsMap = new Map(
+    ratings.map((r) => [r.branchId, r._avg.rating || 0])
   )
+
+  // Combine branch data with ratings
+  const branchesWithStats = branches.map((branch) => ({
+    ...branch,
+    feedbackCount: branch._count.feedbacks,
+    averageRating: ratingsMap.get(branch.id) || 0,
+  }))
 
   // Group by type
   const branchesByType = branchesWithStats.reduce((acc, branch) => {
