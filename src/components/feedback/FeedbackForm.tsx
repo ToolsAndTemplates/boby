@@ -24,13 +24,40 @@ const categories = [
   { value: 'Other', icon: '💬', color: 'gray' },
 ]
 
+interface CustomField {
+  id: string
+  name: string
+  label: string
+  type: string
+  required: boolean
+  options?: string
+  placeholder?: string
+  order: number
+  active: boolean
+}
+
 export default function FeedbackForm({ branches, initialBranchId }: FeedbackFormProps) {
   const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [customFields, setCustomFields] = useState<CustomField[]>([])
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({})
 
   // Filter to show only "Branches" type
   const branchesOnly = branches.filter(b => b.type === 'Branches')
+
+  // Fetch custom fields
+  useEffect(() => {
+    fetch('/api/custom-fields')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const activeFields = data.filter(f => f.active)
+          setCustomFields(activeFields)
+        }
+      })
+      .catch(err => console.error('Error fetching custom fields:', err))
+  }, [])
 
   const {
     register,
@@ -96,6 +123,11 @@ export default function FeedbackForm({ branches, initialBranchId }: FeedbackForm
         }
       })
 
+      // Add custom field values
+      if (Object.keys(customFieldValues).length > 0) {
+        formData.append('customFields', JSON.stringify(customFieldValues))
+      }
+
       files.forEach((file) => {
         formData.append('files', file)
       })
@@ -109,6 +141,7 @@ export default function FeedbackForm({ branches, initialBranchId }: FeedbackForm
         setSuccess(true)
         reset()
         setFiles([])
+        setCustomFieldValues({})
         setTimeout(() => setSuccess(false), 5000)
       } else {
         alert('Failed to submit feedback. Please try again.')
@@ -130,6 +163,146 @@ export default function FeedbackForm({ branches, initialBranchId }: FeedbackForm
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const renderCustomField = (field: CustomField) => {
+    const value = customFieldValues[field.name] || ''
+    const handleChange = (newValue: any) => {
+      setCustomFieldValues(prev => ({ ...prev, [field.name]: newValue }))
+    }
+
+    const baseInputClass = "w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
+
+    switch (field.type) {
+      case 'TEXT':
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={field.placeholder || ''}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+      case 'TEXTAREA':
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={field.placeholder || ''}
+            required={field.required}
+            rows={4}
+            className={`${baseInputClass} resize-none`}
+          />
+        )
+      case 'NUMBER':
+        return (
+          <input
+            type="number"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={field.placeholder || ''}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+      case 'EMAIL':
+        return (
+          <input
+            type="email"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={field.placeholder || ''}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+      case 'PHONE':
+        return (
+          <input
+            type="tel"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={field.placeholder || ''}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+      case 'DATE':
+        return (
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+      case 'SELECT':
+        const selectOptions = field.options ? JSON.parse(field.options) : []
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            required={field.required}
+            className={baseInputClass}
+          >
+            <option value="">Select an option...</option>
+            {selectOptions.map((option: string) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        )
+      case 'RADIO':
+        const radioOptions = field.options ? JSON.parse(field.options) : []
+        return (
+          <div className="space-y-2">
+            {radioOptions.map((option: string) => (
+              <label key={option} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={field.name}
+                  value={option}
+                  checked={value === option}
+                  onChange={(e) => handleChange(e.target.value)}
+                  required={field.required}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className="text-sm text-gray-700">{option}</span>
+              </label>
+            ))}
+          </div>
+        )
+      case 'CHECKBOX':
+        const checkboxOptions = field.options ? JSON.parse(field.options) : []
+        const checkedValues = Array.isArray(value) ? value : []
+        return (
+          <div className="space-y-2">
+            {checkboxOptions.map((option: string) => (
+              <label key={option} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  value={option}
+                  checked={checkedValues.includes(option)}
+                  onChange={(e) => {
+                    const newValues = e.target.checked
+                      ? [...checkedValues, option]
+                      : checkedValues.filter((v: string) => v !== option)
+                    handleChange(newValues)
+                  }}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <span className="text-sm text-gray-700">{option}</span>
+              </label>
+            ))}
+          </div>
+        )
+      default:
+        return null
+    }
   }
 
   return (
@@ -329,6 +502,25 @@ export default function FeedbackForm({ branches, initialBranchId }: FeedbackForm
           </div>
         </div>
       </div>
+
+      {/* Custom Fields */}
+      {customFields.length > 0 && (
+        <div className="border-t-2 border-gray-100 pt-6">
+          <h3 className="text-base font-semibold mb-4 text-gray-800">
+            Additional Information
+          </h3>
+          <div className="space-y-4">
+            {customFields.map((field) => (
+              <div key={field.id}>
+                <label className="block text-sm font-medium mb-2 text-gray-700">
+                  {field.label} {field.required && <span className="text-red-500">*</span>}
+                </label>
+                {renderCustomField(field)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* File Upload */}
       <div>

@@ -18,7 +18,7 @@ export async function PATCH(
         type,
         required,
         options: options ? JSON.stringify(options) : null,
-        placeholder,
+        placeholder: placeholder || null,
         order,
         active,
       },

@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const customerName = formData.get('customerName') as string || undefined
     const customerEmail = formData.get('customerEmail') as string || undefined
     const customerPhone = formData.get('customerPhone') as string || undefined
+    const customFields = formData.get('customFields') as string || undefined
 
     // Validate required fields
     if (!branchId) {
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
         customerName,
         customerEmail,
         customerPhone,
+        customFields,
       },
     })
 

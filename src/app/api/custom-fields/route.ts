@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, label, type, required, options, placeholder, order, active } = body
+    const { name, label, type, required, options, placeholder, order } = body
 
     const field = await db.customField.create({
       data: {
@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
         type,
         required: required || false,
         options: options ? JSON.stringify(options) : null,
-        placeholder,
+        placeholder: placeholder || null,
         order: order || 0,
-        active: active !== undefined ? active : true,
+        active: true,
       },
     })
 

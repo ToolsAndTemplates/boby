@@ -20,6 +20,7 @@ interface Feedback {
   customerName: string | null
   customerEmail: string | null
   customerPhone: string | null
+  customFields: string | null
   createdAt: Date
   branch: {
     id: string
@@ -224,6 +225,25 @@ export default function FeedbackList({ feedbacks, isAdmin }: FeedbackListProps) 
                         <span className="text-gray-700">{feedback.customerPhone}</span>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Custom Fields */}
+                {feedback.customFields && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Additional Information
+                    </h4>
+                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                      {Object.entries(JSON.parse(feedback.customFields)).map(([key, value]) => (
+                        <div key={key} className="flex items-start gap-2 text-sm">
+                          <span className="font-medium text-gray-600 min-w-[120px]">{key}:</span>
+                          <span className="text-gray-800">
+                            {Array.isArray(value) ? value.join(', ') : String(value)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
