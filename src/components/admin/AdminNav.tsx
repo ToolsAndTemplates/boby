@@ -17,6 +17,7 @@ export default function AdminNav({ user }: AdminNavProps) {
 
   const navItems = [
     { href: '/admin/dashboard', label: 'Dashboard' },
+    { href: '/admin/feedbacks', label: 'Feedbacks' },
     { href: '/admin/branches', label: 'Branches' },
     { href: '/admin/branches-sync', label: 'Sync' },
     { href: '/admin/map', label: 'Map' },

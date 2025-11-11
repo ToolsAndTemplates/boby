@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { QRCodeSVG } from 'qrcode.react'
 
 interface Branch {
@@ -24,6 +25,9 @@ interface FeedbackLink {
 }
 
 export default function FeedbackLinksPage() {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
+
   const [links, setLinks] = useState<FeedbackLink[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
@@ -222,18 +226,22 @@ export default function FeedbackLinksPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Feedback Links</h1>
-          <p className="text-gray-600 mt-1">Create and manage shareable feedback collection links</p>
+          <p className="text-gray-600 mt-1">
+            {isAdmin ? 'Create and manage shareable feedback collection links' : 'View feedback collection links'}
+          </p>
         </div>
-        <button
-          onClick={() => {
-            setShowForm(true)
-            setEditingLink(null)
-            setFormData({ name: '', branchId: '', description: '', expiresAt: '', maxUsage: '' })
-          }}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-        >
-          + Create Link
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => {
+              setShowForm(true)
+              setEditingLink(null)
+              setFormData({ name: '', branchId: '', description: '', expiresAt: '', maxUsage: '' })
+            }}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            + Create Link
+          </button>
+        )}
       </div>
 
       {/* Form Modal */}
@@ -400,16 +408,26 @@ export default function FeedbackLinksPage() {
                     {link.usageCount} {link.maxUsage ? `/ ${link.maxUsage}` : ''}
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={() => toggleActive(link)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    {isAdmin ? (
+                      <button
+                        onClick={() => toggleActive(link)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          link.active
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {link.active ? 'Active' : 'Inactive'}
+                      </button>
+                    ) : (
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         link.active
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {link.active ? 'Active' : 'Inactive'}
-                    </button>
+                      }`}>
+                        {link.active ? 'Active' : 'Inactive'}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {new Date(link.createdAt).toLocaleDateString()}
@@ -430,18 +448,22 @@ export default function FeedbackLinksPage() {
                       >
                         Copy
                       </button>
-                      <button
-                        onClick={() => handleEdit(link)}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(link.id)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium"
-                      >
-                        Delete
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={() => handleEdit(link)}
+                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(link.id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

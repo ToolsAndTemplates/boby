@@ -1,3 +1,4 @@
+import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -6,6 +7,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth()
+
+    // Require authentication
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
     const link = await db.feedbackLink.findUnique({
       where: { id },
@@ -33,6 +41,21 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth()
+
+    // Check authentication
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Only admins can update feedback links
+    if (session.user?.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only admins can update feedback links' },
+        { status: 403 }
+      )
+    }
+
     const { id } = await params
     const body = await request.json()
     const { name, branchId, description, active, expiresAt, maxUsage } = body
@@ -67,6 +90,21 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth()
+
+    // Check authentication
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Only admins can delete feedback links
+    if (session.user?.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden: Only admins can delete feedback links' },
+        { status: 403 }
+      )
+    }
+
     const { id } = await params
     await db.feedbackLink.delete({
       where: { id },
