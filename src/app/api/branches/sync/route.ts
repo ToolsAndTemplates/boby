@@ -1,14 +1,20 @@
 import { db } from '@/lib/db'
 import { NextResponse } from 'next/server'
 
-interface BankAPILocation {
+interface BankAPIList {
   title: string
   address: string
   serviceNames: string
-  location: string // "latitude, longitude"
+  location: string | null // null in lists
   slug: string
   language: string
   id: string
+}
+
+interface BankAPIListGroup {
+  id: string
+  location: string | null // coordinates here! "lat, lng"
+  lists: BankAPIList[]
 }
 
 interface BankAPIResponse {
@@ -17,9 +23,7 @@ interface BankAPIResponse {
   payload: {
     pages: Array<{
       informationGroup: Array<{
-        listGroup: Array<{
-          lists: BankAPILocation[]
-        }>
+        listGroup: BankAPIListGroup[]
       }>
     }>
     positionOrder: number
@@ -73,15 +77,22 @@ export async function POST() {
       throw new Error('Invalid API response structure')
     }
 
-    // Flatten nested structure to get all locations
-    const allLocations: BankAPILocation[] = []
+    // Flatten nested structure and assign coordinates from listGroup to each list
+    const allLocations: Array<BankAPIList & { groupLocation: string }> = []
     for (const page of data.payload.pages) {
       if (!page.informationGroup) continue
       for (const infoGroup of page.informationGroup) {
         if (!infoGroup.listGroup) continue
         for (const listGroup of infoGroup.listGroup) {
-          if (!listGroup.lists) continue
-          allLocations.push(...listGroup.lists)
+          if (!listGroup.lists || !listGroup.location) continue
+
+          // Each list in this group gets the group's location
+          for (const list of listGroup.lists) {
+            allLocations.push({
+              ...list,
+              groupLocation: listGroup.location,
+            })
+          }
         }
       }
     }
@@ -98,27 +109,27 @@ export async function POST() {
     // Sync each location with database
     for (const location of englishLocations) {
       try {
-        // Validate location data
-        if (!location.location || typeof location.location !== 'string') {
+        // Validate location data (now from groupLocation)
+        if (!location.groupLocation || typeof location.groupLocation !== 'string') {
           console.error(`Missing or invalid location for ${location.title || 'unknown'}`)
           errors++
           continue
         }
 
         // Parse location string "latitude, longitude"
-        const parts = location.location.split(',')
+        const parts = location.groupLocation.split(',')
         if (parts.length !== 2) {
-          console.error(`Invalid location format for ${location.title}: ${location.location}`)
+          console.error(`Invalid location format for ${location.title}: ${location.groupLocation}`)
           errors++
           continue
         }
 
-        const [latStr, lngStr] = parts.map((s) => s.trim())
+        const [latStr, lngStr] = parts.map((s: string) => s.trim())
         const latitude = parseFloat(latStr)
         const longitude = parseFloat(lngStr)
 
         if (isNaN(latitude) || isNaN(longitude)) {
-          console.error(`Invalid coordinates for ${location.title}: ${location.location}`)
+          console.error(`Invalid coordinates for ${location.title}: ${location.groupLocation}`)
           errors++
           continue
         }
@@ -218,15 +229,22 @@ export async function GET() {
       throw new Error('Invalid API response structure')
     }
 
-    // Flatten nested structure to get all locations
-    const allLocations: BankAPILocation[] = []
+    // Flatten nested structure and assign coordinates from listGroup to each list
+    const allLocations: Array<BankAPIList & { groupLocation: string }> = []
     for (const page of data.payload.pages) {
       if (!page.informationGroup) continue
       for (const infoGroup of page.informationGroup) {
         if (!infoGroup.listGroup) continue
         for (const listGroup of infoGroup.listGroup) {
-          if (!listGroup.lists) continue
-          allLocations.push(...listGroup.lists)
+          if (!listGroup.lists || !listGroup.location) continue
+
+          // Each list in this group gets the group's location
+          for (const list of listGroup.lists) {
+            allLocations.push({
+              ...list,
+              groupLocation: listGroup.location,
+            })
+          }
         }
       }
     }
@@ -235,17 +253,17 @@ export async function GET() {
     const branches = allLocations
       .filter((loc) => loc.language === 'en')
       .map((location) => {
-        // Handle missing or invalid location data
-        if (!location.location || typeof location.location !== 'string') {
+        // Handle missing or invalid location data (now from groupLocation)
+        if (!location.groupLocation || typeof location.groupLocation !== 'string') {
           return null
         }
 
-        const parts = location.location.split(',')
+        const parts = location.groupLocation.split(',')
         if (parts.length !== 2) {
           return null
         }
 
-        const [latStr, lngStr] = parts.map((s) => s.trim())
+        const [latStr, lngStr] = parts.map((s: string) => s.trim())
         const latitude = parseFloat(latStr)
         const longitude = parseFloat(lngStr)
 
