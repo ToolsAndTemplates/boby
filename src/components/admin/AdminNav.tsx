@@ -20,6 +20,8 @@ export default function AdminNav({ user }: AdminNavProps) {
     { href: '/admin/branches', label: 'Branches' },
     { href: '/admin/map', label: 'Map' },
     { href: '/admin/analytics', label: 'Analytics' },
+    { href: '/admin/feedback-links', label: 'Links' },
+    { href: '/admin/custom-fields', label: 'Fields' },
     ...(user.role === 'ADMIN' ? [{ href: '/admin/users', label: 'Users' }] : []),
   ]
 

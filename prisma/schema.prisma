@@ -27,18 +27,19 @@ model User {
 }
 
 model Branch {
-  id        String     @id @default(cuid())
-  name      String
-  address   String
-  type      String     // ATM, Branch, Payment Terminal
-  services  String?
-  latitude  Float
-  longitude Float
-  qrCode    String?    @unique
-  users     User[]
-  feedbacks Feedback[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  address       String
+  type          String         // ATM, Branch, Payment Terminal
+  services      String?
+  latitude      Float
+  longitude     Float
+  qrCode        String?        @unique
+  users         User[]
+  feedbacks     Feedback[]
+  feedbackLinks FeedbackLink[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([type])
   @@schema("boby")
@@ -78,8 +79,61 @@ model FeedbackFile {
   @@schema("boby")
 }
 
+model CustomField {
+  id          String   @id @default(cuid())
+  name        String
+  label       String
+  type        FieldType
+  required    Boolean  @default(false)
+  options     String?  // JSON array for select/checkbox options
+  placeholder String?
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active])
+  @@index([order])
+  @@schema("boby")
+}
+
+model FeedbackLink {
+  id          String   @id @default(cuid())
+  name        String   // Friendly name for the link
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  slug        String   @unique
+  description String?
+  active      Boolean  @default(true)
+  expiresAt   DateTime?
+  usageCount  Int      @default(0)
+  maxUsage    Int?     // Optional max usage limit
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([active])
+  @@index([branchId])
+  @@schema("boby")
+}
+
+
 enum Role {
   ADMIN
   USER
+  @@schema("boby")
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  EMAIL
+  PHONE
+  SELECT
+  CHECKBOX
+  RADIO
+  DATE
   @@schema("boby")
 }
