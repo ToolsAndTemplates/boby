@@ -110,26 +110,13 @@ export default function FeedbackForm({ branches, initialBranchId }: FeedbackForm
         </div>
       )}
 
-      {/* Branch Selection */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Select Branch <span className="text-red-500">*</span>
-        </label>
-        <select
-          {...register('branchId')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">Choose a branch...</option>
-          {branchesOnly.map((branch) => (
-            <option key={branch.id} value={branch.id}>
-              {branch.name}
-            </option>
-          ))}
-        </select>
-        {errors.branchId && (
-          <p className="text-red-500 text-sm mt-1">{errors.branchId.message}</p>
-        )}
-      </div>
+      {/* Hidden Branch ID - set by map selection */}
+      <input type="hidden" {...register('branchId')} />
+      {errors.branchId && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          Please select a branch from the map or list above
+        </div>
+      )}
 
       {/* Rating */}
       <div>
