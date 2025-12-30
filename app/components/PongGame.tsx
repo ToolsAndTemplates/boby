@@ -89,7 +89,7 @@ export default function PongGame() {
   const particlesRef = useRef<Particle[]>([]);
   const floatingTextsRef = useRef<FloatingText[]>([]);
   const keysRef = useRef<{ [key: string]: boolean }>({});
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const trailRef = useRef<{ x: number; y: number; alpha: number }[]>([]);
   const lastFrameTime = useRef(performance.now());
   const frameCount = useRef(0);
